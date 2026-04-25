@@ -11,7 +11,7 @@ function int(name, fallback) {
 const root = path.join(__dirname, '..');
 
 module.exports = {
-  httpPort: int('HTTP_PORT', 1881),
+  httpPort: int('HTTP_PORT', 45751),
   tcpPort: int('TCP_PORT', 8080),
   tcpIdleTimeoutMs: int('TCP_IDLE_TIMEOUT_MS', 35000),
   dbPath: process.env.DB_PATH
