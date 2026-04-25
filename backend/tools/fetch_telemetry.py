@@ -7,9 +7,9 @@ Gereksinimler:
   - .mat çıktısı: pip install scipy numpy
 
 Örnek:
-  python fetch_telemetry.py --url http://127.0.0.1:1881 --out run.csv
-  python fetch_telemetry.py --url http://SUNUCU_IP:1881 --since 2026-04-25T00:00:00 --limit 50000 --out data.csv
-  python fetch_telemetry.py --url http://127.0.0.1:1881 --out data.csv --mat data.mat
+  python fetch_telemetry.py --url http://127.0.0.1:45751 --out run.csv
+  python fetch_telemetry.py --url http://SUNUCU_IP:45751 --since 2026-04-25T00:00:00 --limit 50000 --out data.csv
+  python fetch_telemetry.py --url http://127.0.0.1:45751 --out data.csv --mat data.mat
 """
 
 import argparse
@@ -121,8 +121,8 @@ def main() -> None:
     p = argparse.ArgumentParser(description="Telemetri sunucusundan veri çek")
     p.add_argument(
         "--url",
-        default="http://127.0.0.1:1881",
-        help="Sunucu kök adresi (örn: http://IP:1881)",
+        default="http://127.0.0.1:45751",
+        help="Sunucu kök adresi (örn: http://IP:45751)",
     )
     p.add_argument("--since", default=None, help="ISO zaman: received_at >= (opsiyonel)")
     p.add_argument("--until", default=None, help="ISO zaman: received_at <= (opsiyonel)")
