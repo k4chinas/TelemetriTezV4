@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="tr" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Telemetri Dashboard</title>
+    <!-- Leaflet (Harita) CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="top-bar">
+        <div class="logo-area">
+            <div class="logo-icon"></div>
+            <div class="title-group">
+                <h1>Telemetri Dashboard</h1>
+                <span class="subtitle">ESTUPRJ352026</span>
+            </div>
+            
+            <!-- Kayıt Kontrolleri -->
+            <div class="record-controls">
+                <button id="btn-start-record" class="btn btn-red"><span class="dot-record"></span> Kaydı Başlat</button>
+                
+                <div id="recording-active" class="hidden">
+                    <span id="record-count" class="record-badge">0 satır</span>
+                    <button id="btn-pause-record" class="btn btn-outline">Kaydı Durdur</button>
+                </div>
+                
+                <div id="recording-paused" class="hidden">
+                    <button id="btn-resume-record" class="btn btn-outline">Kayda Devam Et</button>
+                    <button id="btn-finish-record" class="btn btn-green">Kaydı Bitir</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="status-area">
+            <div class="timestamp">
+                <span class="icon">⏱</span> Son Veri: <span id="last-time">--:--:-- | --.--.----</span>
+            </div>
+            <div id="connection-status" class="status-badge offline">
+                <span class="wifi-icon">📶</span> <span id="conn-text">Offline</span>
+            </div>
+            <button id="theme-toggle" class="btn-icon">☀️</button>
+        </div>
+    </header>
+
+    <main class="dashboard-layout">
+        <!-- SOL PANEL: Harita ve MPU -->
+        <aside class="left-panel">
+            <div class="panel-box map-box">
+                <div class="box-header">
+                    <div class="header-title"><span class="icon">📍</span> GPS Konum</div>
+                    <button id="btn-map-toggle" class="btn-small">🗺️ Uydu / Harita</button>
+                </div>
+                <div class="coords-info">
+                    Lat: <span id="lat-val">0.000000</span> | Lon: <span id="lon-val">0.000000</span> | Alt: <span id="alt-val">0</span>m
+                </div>
+                <div id="map"></div>
+            </div>
+
+            <div class="panel-box mpu-box">
+                <div class="box-header">
+                    <div class="header-title"><span class="icon">📐</span> MPU Sensor<br><small>Gyro / İvme / Manyetik</small></div>
+                    <div class="temp-badge">🌡️ <span id="mpu-temp">0.0</span>°C</div>
+                </div>
+                <div class="mpu-grid">
+                    <div class="mpu-col">
+                        <div class="mpu-title gyro-color">● GYRO</div>
+                        <div class="mpu-row"><span>X</span><span id="gx-val">0.00</span></div>
+                        <div class="mpu-row"><span>Y</span><span id="gy-val">0.00</span></div>
+                        <div class="mpu-row"><span>Z</span><span id="gz-val">0.00</span></div>
+                    </div>
+                    <div class="mpu-col">
+                        <div class="mpu-title accel-color">● İVME</div>
+                        <div class="mpu-row"><span>X</span><span id="ax-val">0.00</span></div>
+                        <div class="mpu-row"><span>Y</span><span id="ay-val">0.00</span></div>
+                        <div class="mpu-row"><span>Z</span><span id="az-val">0.00</span></div>
+                    </div>
+                    <div class="mpu-col">
+                        <div class="mpu-title mag-color">● MAG</div>
+                        <div class="mpu-row"><span>X</span><span id="mx-val">0.00</span></div>
+                        <div class="mpu-row"><span>Y</span><span id="my-val">0.00</span></div>
+                        <div class="mpu-row"><span>Z</span><span id="mz-val">0.00</span></div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- SAĞ PANEL: Metrik Kartları -->
+        <section class="metrics-grid">
+            <!-- Hız Kartı -->
+            <div class="metric-card" onclick="toggleCard('speed')" data-color="#ef4444">
+                <div class="card-header">
+                    <div class="card-icon" style="color: #ef4444;">⏱</div>
+                    <div class="card-title">HIZ</div>
+                </div>
+                <div class="card-body">
+                    <div class="value-large"><span id="speed-val">0.0</span> <span class="unit">km/h</span></div>
+                    <div class="value-avg">Ortalama: <span id="speed-avg">0.0</span> km/h</div>
+                </div>
+                <div class="chart-container"><canvas id="chart-speed"></canvas></div>
+            </div>
+
+            <!-- Voltaj Kartı -->
+            <div class="metric-card" onclick="toggleCard('voltage')" data-color="#eab308">
+                <div class="card-header">
+                    <div class="card-icon" style="color: #eab308;">⚡</div>
+                    <div class="card-title">VOLTAJ</div>
+                </div>
+                <div class="card-body">
+                    <div class="value-large"><span id="volt-val">0.0</span> <span class="unit">V</span></div>
+                    <div class="value-avg">Ortalama: <span id="volt-avg">0.0</span> V</div>
+                </div>
+                <div class="chart-container"><canvas id="chart-voltage"></canvas></div>
+            </div>
+
+            <!-- Akım Kartı -->
+            <div class="metric-card" onclick="toggleCard('current')" data-color="#3b82f6">
+                <div class="card-header">
+                    <div class="card-icon" style="color: #3b82f6;">〰</div>
+                    <div class="card-title">AKIM</div>
+                </div>
+                <div class="card-body">
+                    <div class="value-large"><span id="curr-val">0.0</span> <span class="unit">A</span></div>
+                    <div class="value-avg">Ortalama: <span id="curr-avg">0.0</span> A</div>
+                </div>
+                <div class="chart-container"><canvas id="chart-current"></canvas></div>
+            </div>
+
+            <!-- Güç (Watt) Kartı -->
+            <div class="metric-card" onclick="toggleCard('power')" data-color="#a855f7">
+                <div class="card-header">
+                    <div class="card-icon" style="color: #a855f7;">⬢</div>
+                    <div class="card-title">GÜÇ</div>
+                </div>
+                <div class="card-body">
+                    <div class="value-large"><span id="power-val">0</span> <span class="unit">W</span></div>
+                    <div class="value-avg">Ortalama: <span id="power-avg">0</span> W</div>
+                </div>
+                <div class="chart-container"><canvas id="chart-power"></canvas></div>
+            </div>
+
+            <!-- Enerji (WattSaat) Kartı -->
+            <div class="metric-card" onclick="toggleCard('energy')" data-color="#06b6d4">
+                <div class="card-header">
+                    <div class="card-icon" style="color: #06b6d4;">⏱</div>
+                    <div class="card-title">ENERJİ</div>
+                </div>
+                <div class="card-body">
+                    <div class="value-large"><span id="energy-val">0.00</span> <span class="unit">Wh</span></div>
+                    <div class="value-avg">Ortalama: <span id="energy-avg">0.00</span> Wh</div>
+                </div>
+                <div class="chart-container"><canvas id="chart-energy"></canvas></div>
+            </div>
+
+            <!-- Kalan Enerji Kartı -->
+            <div class="metric-card" onclick="toggleCard('battery')" data-color="#22c55e">
+                <div class="card-header">
+                    <div class="card-icon" style="color: #22c55e;">🔋</div>
+                    <div class="card-title">KALAN ENERJİ</div>
+                </div>
+                <div class="card-body">
+                    <div class="value-large"><span id="batt-val">0.0</span> <span class="unit">%</span></div>
+                    <div class="value-avg">Ortalama: <span id="batt-avg">0.0</span> %</div>
+                </div>
+                <div class="chart-container"><canvas id="chart-battery"></canvas></div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Harita ve Grafikler İçin Kütüphaneler -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- FIX #2: Socket.IO client eklendi — gerçek zamanlı TCP verisi için zorunlu -->
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
