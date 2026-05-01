@@ -1,4 +1,5 @@
 const net = require('net');
+const { normalizeIncomingPayload } = require('./payload-normalize');
 const { validateTelemetry } = require('./validator');
 
 /**
@@ -69,7 +70,8 @@ function createTcpServer(io, store, config, device) {
         }
         let data;
         try {
-          data = validateTelemetry(parsed);
+          const normalized = normalizeIncomingPayload(parsed);
+          data = validateTelemetry(normalized);
         } catch (e) {
           io.emit('telemetry_error', { message: String(e.message || e) });
           continue;
